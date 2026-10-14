@@ -1,5 +1,6 @@
 import os
 from fastapi import FastAPI, Header, HTTPException, Depends
+from pydantic import BaseModel
 app = FastAPI()
 API_KEY = os.environ.get("API_KEY")
 def check_key(x_api_key: str = Header(None)):
@@ -23,3 +24,18 @@ def get_employee(employee_id: int):
         if employee["id"] == employee_id:
             return employee
     return {"error": "Employee not found"}
+class NewEmployee(BaseModel):
+    name: str
+    department: str
+
+
+@app.post("/employees", dependencies=[Depends(check_key)])
+def add_employee(new:NewEmployee):
+    new_id = max(e["id"] for e in employees) + 1
+    employee = {
+        "id":new_id,
+        "name":new.name,
+        "department": new.department
+    }
+    employees.append(employee)
+    return employee
