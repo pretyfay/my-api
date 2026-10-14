@@ -1,5 +1,10 @@
-from fastapi import FastAPI
+import os
+from fastapi import FastAPI, Header, HTTPException, Depends
 app = FastAPI()
+API_KEY = os.environ.get("API_KEY")
+def check_key(x_api_key: str = Header(None)):
+    if not API_KEY or x_api_key != API_KEY:
+        raise HTTPException(status_code=401, detail="Invalid or missing API key")
 @app.get("/")
 def home():
     return {"message": "Hello from my API"}
@@ -8,11 +13,11 @@ employees = [
     {"id": 2, "name": "Ali", "department": "HR"},
     {"id": 3, "name": "Nora", "department": "Finance"}
 ]
-@app.get("/employees")
+@app.get("/employees", dependencies=[Depends(check_key)])
 def get_employees():
     return employees
 
-@app.get("/employees/{employee_id}")
+@app.get("/employees/{employee_id}", dependencies=[Depends(check_key)])
 def get_employee(employee_id: int):
     for employee in employees:
         if employee["id"] == employee_id:
